@@ -37,3 +37,11 @@ coverage/
 
 # Production
 build/
+
+# .gitignore
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+*.env
