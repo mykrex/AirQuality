@@ -6,7 +6,7 @@ const axios = require('axios');
 const { generateMockPrediction } = require('../data/mockData');
 
 // URL del servidor de Python ML (tu equipo lo configurará)
-const ML_MODEL_URL = process.env.ML_MODEL_URL || 'http://localhost:5000';
+const ML_MODEL_URL = process.env.ML_MODEL_URL || 'http://localhost:3001';
 
 // POST - Obtener predicción para una fecha futura
 router.post('/predict', async (req, res) => {
