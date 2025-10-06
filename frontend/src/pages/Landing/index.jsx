@@ -177,7 +177,7 @@ function LandingPage({ onNavigate }) {
               </div>
               <h3 className="text-xl font-bold text-white mb-2">Selecciona Ubicación</h3>
               <p className="text-gray-400">
-                Elige tu ciudad o haz click en el mapa para ver datos locales
+                Elige tu ciudad o haz accede al mapa para ver datos locales
               </p>
             </div>
 
@@ -208,29 +208,15 @@ function LandingPage({ onNavigate }) {
       <div className="relative py-20 px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl p-12 shadow-2xl">
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Comienza a Monitorear Ahora
-            </h2>
-            <p className="text-blue-100 text-lg mb-8">
-              Únete a miles de usuarios que protegen su salud con datos en tiempo real
-            </p>
             <button 
               onClick={() => onNavigate('dashboard')}
               className="px-10 py-4 bg-white text-purple-600 rounded-xl font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all"
             >
-              Empezar Gratis
+              Comienza a Monitorear Ahora
             </button>
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer className="relative py-8 px-8 border-t border-white/10">
-        <div className="max-w-7xl mx-auto text-center text-gray-400">
-          <p>NASA Space Apps Challenge 2025 • Datos proporcionados por NASA TEMPO & OpenAQ</p>
-          <p className="text-sm mt-2">Desarrollado con React • Node.js • Machine Learning</p>
-        </div>
-      </footer>
     </div>
   );
 }
