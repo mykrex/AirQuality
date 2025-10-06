@@ -21,6 +21,8 @@ const mockUsers = [
           predictions: true
         }
       },
+      transportation: 'bike',
+      maskUsage: 'sometimes',
       createdAt: new Date('2025-01-15')
     },
     {
@@ -43,6 +45,8 @@ const mockUsers = [
           predictions: false
         }
       },
+      transportation: 'bike',
+      maskUsage: 'sometimes',
       createdAt: new Date('2025-02-01')
     }
   ];

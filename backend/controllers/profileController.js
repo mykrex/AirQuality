@@ -39,7 +39,9 @@ const createUserProfile = async (req, res) => {
       location, 
       healthConditions, 
       activityLevel,
-      preferences 
+      preferences,
+      transportation,
+      maskUsage, 
     } = req.body;
     
     // Validar campos requeridos
@@ -75,7 +77,9 @@ const createUserProfile = async (req, res) => {
           alerts: preferences?.notificationSettings?.alerts ?? true,
           dailyReport: preferences?.notificationSettings?.dailyReport ?? true,
           predictions: preferences?.notificationSettings?.predictions ?? false
-        }
+        },
+        transportation: transportation || 'bike',
+        maskUsage: maskUsage || 'sometimes',
       },
       createdAt: new Date()
     };
@@ -118,7 +122,9 @@ const updateUserProfile = async (req, res) => {
       'location', 
       'healthConditions', 
       'activityLevel',
-      'preferences'
+      'preferences',
+      'transportation',
+      'maskUsage'
     ];
     
     allowedUpdates.forEach(field => {

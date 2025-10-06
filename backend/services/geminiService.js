@@ -3,7 +3,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 class GeminiService {
   constructor() {
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
   }
 
   /**
@@ -81,7 +81,7 @@ Responde en formato JSON:
    */
   async generateAlert(airQualityData, userProfile) {
     const { aqi, level } = airQualityData;
-    const { healthConditions, age, activityLevel } = userProfile;
+    const { healthConditions, age, activityLevel, transportation, maskUsage } = userProfile;
 
     // Solo generar alertas si AQI > 100 o si usuario tiene condiciones de salud
     if (aqi < 100 && (!healthConditions || healthConditions.length === 0)) {
@@ -99,9 +99,11 @@ Genera una alerta de salud urgente para:
 - Edad: ${age} años
 - Condiciones de salud: ${healthConditions?.join(', ') || 'Ninguna'}
 - Nivel de actividad: ${activityLevel}
+- Transporte habitual: ${this.getTransportationLabel(transportation)}
+- Uso de mascarilla: ${this.getMaskUsageLabel(maskUsage)}
 
-Genera una alerta CONCISA (máximo 2 oraciones) que:
-1. Explique el riesgo específico para esta persona
+Genera una alerta CONCISA (máximo 2-3 oraciones) que:
+1. Explique el riesgo específico para esta persona considerando su medio de transporte y uso de protección
 2. Dé una acción inmediata a tomar
 
 Responde SOLO el texto de la alerta, sin formato adicional.
@@ -122,7 +124,15 @@ Responde SOLO el texto de la alerta, sin formato adicional.
    */
   buildPrompt(airQualityData, userProfile) {
     const { aqi, pm25, pm10, level, location } = airQualityData;
-    const { name, age, healthConditions, activityLevel, preferences } = userProfile;
+    const { 
+      name, 
+      age, 
+      healthConditions, 
+      activityLevel, 
+      preferences,
+      transportation,
+      maskUsage 
+    } = userProfile;
 
     return `
 Eres un experto en salud ambiental. Analiza estos datos y genera recomendaciones personalizadas:
@@ -137,7 +147,12 @@ Eres un experto en salud ambiental. Analiza estos datos y genera recomendaciones
 - Edad: ${age} años
 - Condiciones de salud: ${healthConditions?.join(', ') || 'Ninguna'}
 - Nivel de actividad: ${activityLevel}
-- Preferencias: ${preferences?.join(', ') || 'General'}
+- Actividades preferidas: ${preferences?.join(', ') || 'General'}
+- Medio de transporte: ${this.getTransportationLabel(transportation)}
+- Uso de mascarilla: ${this.getMaskUsageLabel(maskUsage)}
+
+**Análisis de exposición:**
+${this.getExposureAnalysis(transportation, maskUsage, aqi)}
 
 Genera recomendaciones en formato JSON con esta estructura:
 {
@@ -145,19 +160,86 @@ Genera recomendaciones en formato JSON con esta estructura:
   "summary": "Resumen breve (1 oración)",
   "recommendations": [
     {
-      "category": "activity|health|indoor|outdoor",
+      "category": "transportation|activity|health|indoor|outdoor|protection",
       "title": "Título corto",
-      "description": "Descripción detallada",
+      "description": "Descripción detallada considerando su medio de transporte y uso de protección",
       "priority": "low|medium|high"
     }
   ],
   "shouldGoOutside": boolean,
   "bestTimeToday": "HH:MM - HH:MM o 'No recomendado'",
-  "nextCheck": "Cuándo volver a revisar (ej: 'en 2 horas')"
+  "nextCheck": "Cuándo volver a revisar (ej: 'en 2 horas')",
+  "transportationAdvice": "Consejo específico sobre el medio de transporte que usa",
+  "protectionAdvice": "Consejo sobre protección (mascarilla) basado en su uso actual"
 }
 
-Sé específico y considera las condiciones de salud del usuario. Las recomendaciones deben ser prácticas y accionables.
+Sé específico y considera:
+- Su medio de transporte (${this.getTransportationLabel(transportation)}) afecta su exposición
+- Su uso de mascarilla (${this.getMaskUsageLabel(maskUsage)}) es un factor de protección importante
+- Las condiciones de salud del usuario
+- El nivel de AQI actual
+
+Las recomendaciones deben ser prácticas y accionables.
 `;
+  }
+
+  /**
+   * Analiza el nivel de exposición según transporte y protección
+   */
+  getExposureAnalysis(transportation, maskUsage, aqi) {
+    let exposure = 'moderada';
+    let risk = 'medio';
+
+    // Calcular exposición según transporte
+    if (transportation === 'bike' || transportation === 'walking') {
+      exposure = 'alta';
+      risk = 'alto';
+    } else if (transportation === 'public') {
+      exposure = 'moderada-alta';
+      risk = 'medio-alto';
+    } else if (transportation === 'car') {
+      exposure = 'baja-moderada';
+      risk = 'bajo-medio';
+    }
+
+    // Ajustar según uso de mascarilla
+    if (maskUsage === 'always') {
+      risk = risk.replace('alto', 'medio').replace('medio', 'bajo');
+    } else if (maskUsage === 'never' && aqi > 100) {
+      risk = risk.replace('bajo', 'medio').replace('medio', 'alto');
+    }
+
+    return `
+- Exposición estimada: ${exposure} (debido a uso de ${this.getTransportationLabel(transportation)})
+- Nivel de riesgo: ${risk}
+- Protección actual: ${maskUsage === 'always' ? 'Adecuada' : maskUsage === 'sometimes' ? 'Parcial' : 'Insuficiente'}
+${aqi > 100 && maskUsage === 'never' ? '- ⚠️ Se recomienda fuertemente el uso de mascarilla con este nivel de AQI' : ''}
+`;
+  }
+
+  /**
+   * Obtiene etiqueta de transporte
+   */
+  getTransportationLabel(transportation) {
+    const labels = {
+      car: 'Auto (exposición reducida)',
+      bike: 'Bicicleta (alta exposición)',
+      walking: 'Caminando (alta exposición directa)',
+      public: 'Transporte público (exposición moderada)'
+    };
+    return labels[transportation] || transportation;
+  }
+
+  /**
+   * Obtiene etiqueta de uso de mascarilla
+   */
+  getMaskUsageLabel(maskUsage) {
+    const labels = {
+      never: 'Nunca usa mascarilla',
+      sometimes: 'Usa mascarilla ocasionalmente',
+      always: 'Siempre usa mascarilla'
+    };
+    return labels[maskUsage] || maskUsage;
   }
 
   /**
@@ -187,7 +269,9 @@ Sé específico y considera las condiciones de salud del usuario. Las recomendac
         ],
         shouldGoOutside: true,
         bestTimeToday: "Consulta el pronóstico local",
-        nextCheck: "en 1 hora"
+        nextCheck: "en 1 hora",
+        transportationAdvice: "Considera tu medio de transporte habitual",
+        protectionAdvice: "Evalúa el uso de mascarilla según las condiciones"
       };
     }
   }

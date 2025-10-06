@@ -26,7 +26,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check ANTES de las rutas
+// Health check
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -35,13 +35,15 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Routes - Con manejo de errores
+// Routes
 try {
   const notificationRoutes = require('./routes/notification.routes');
   const profileRoutes = require('./routes/profile.routes');
+  const predictionRoutes = require('./routes/predictions');
 
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/profile', profileRoutes);
+  app.use('/api/ml', predictionRoutes);
   
   console.log('✅ Routes loaded successfully');
 } catch (error) {
@@ -69,7 +71,7 @@ app.use((req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
-  console.log(`🌍 CORS enabled for frontend`);
+  console.log(`🌐 CORS enabled for frontend`);
   console.log(`🤖 Gemini API: ${process.env.GEMINI_API_KEY ? 'Configured' : 'NOT configured'}`);
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
 });
