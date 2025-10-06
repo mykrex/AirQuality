@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import OpenStreetMap from './pages/Map';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
+import DatosPage from './pages/Datos';
 
 function App() {
   const [currentView, setCurrentView] = useState('dashboard');
@@ -25,6 +26,8 @@ function App() {
       case 'predict':
         // TODO: Cuando tu equipo termine el modelo de predicción
         return <Dashboard onNavigate={setCurrentView} userId={currentUserId} />;
+      case 'datos':
+        return <DatosPage onNavigate={setCurrentView} userId={currentUserId} />;
       default:
         return <Dashboard onNavigate={setCurrentView} userId={currentUserId} />;
     }
