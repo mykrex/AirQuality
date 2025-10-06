@@ -1,6 +1,5 @@
 import pickle
 from sklearn.ensemble import HistGradientBoostingRegressor
-# ... (tu código de entrenamiento actual)
 
 import requests
 import pandas as pd
