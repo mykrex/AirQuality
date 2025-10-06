@@ -2,16 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncSelect from 'react-select/async';
 import debounce from 'lodash/debounce';
 import { getLocalTime } from '../../utils/geocoding';
-import { Clock, User, Bell as BellIcon } from 'lucide-react';
+import { Clock, Bell as BellIcon } from 'lucide-react';
 import CityCardExpanded from '../../Components/CityCard';
-import NotificationBell from '../../Components/NotificationBell';
-import AirQualityRecommendations from '../../Components/AirQualityRecommendations';
+import Navbar from '../../Components/Navbar';
+import { getPredictions } from '../../services/airQualityService';
 
 function Dashboard({ onNavigate, userId = '1' }) {
   const [currentTime, setCurrentTime] = useState(getLocalTime());
   const [pinnedCities, setPinnedCities] = useState([]);
   const [isLoadingCity, setIsLoadingCity] = useState(false);
-  const [selectedCity, setSelectedCity] = useState(null); // Para mostrar recomendaciones
+  const [selectedCity, setSelectedCity] = useState(null);
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
   const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || 'pk.tu_token_aqui';
@@ -21,7 +21,6 @@ function Dashboard({ onNavigate, userId = '1' }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Búsqueda con Mapbox - 100k búsquedas GRATIS al mes
   const searchCities = useCallback(
     debounce((inputValue, callback) => {
       if (inputValue.length < 1) {
@@ -78,36 +77,72 @@ function Dashboard({ onNavigate, userId = '1' }) {
     setIsLoadingCity(true);
     
     try {
-      const response = await fetch(`${API_URL}/api/air-quality/latest/${cityOption.city}`);
-      const data = await response.json();
+      const [lng, lat] = cityOption.coordinates;
+      
+      console.log('🔍 Obteniendo predicción para:', cityOption.label, '- Coords:', lat, lng);
+      
+      // Obtener predicción del modelo ML
+      const mlData = await getPredictions(lat, lng, 24);
       
       let airQualityData = null;
-      if (data.results && data.results.length > 0) {
-        const pm25 = data.results.find(r => r.parameter === 'pm25')?.value || 0;
-        const no2 = data.results.find(r => r.parameter === 'no2')?.value || 0;
-        const o3 = data.results.find(r => r.parameter === 'o3')?.value || 0;
+      
+      if (mlData.success) {
+        console.log('✅ Modelo ML respondió correctamente');
+        console.log('Current PM2.5:', mlData.current_pm25);
+        console.log('Predicciones:', mlData.predictions.length);
         
-        let aqi = Math.min(Math.round((pm25 / 12) * 50), 500);
-
         airQualityData = {
-          aqi,
+          aqi: mlData.current_aqi || Math.round(mlData.current_pm25 * 2),
+          pm25: mlData.current_pm25.toFixed(1),
+          pm10: (mlData.current_pm25 * 1.5).toFixed(1),
+          o3: mlData.current_o3?.toFixed(1) || '0.0',
+          no2: mlData.current_no2?.toFixed(1) || '0.0',
+          co: Number(mlData.current_co) || 0,
+          timestamp: new Date().toISOString(),
+          predictions: mlData.predictions,
+          source: 'ml_model'
+        };
+      } else {
+        console.warn('⚠️ Modelo ML no disponible, usando fallback');
+        const pm25 = 25 + Math.random() * 15;
+        airQualityData = {
+          aqi: Math.round((pm25 / 12) * 50),
           pm25: pm25.toFixed(1),
           pm10: (pm25 * 1.5).toFixed(1),
-          o3: o3.toFixed(1),
-          no2: no2.toFixed(1),
-          timestamp: new Date().toISOString()
+          o3: '45.2',
+          no2: '38.5',
+          timestamp: new Date().toISOString(),
+          source: 'mock'
         };
       }
 
       const newCity = { ...cityOption, airQuality: airQualityData };
       setPinnedCities([...pinnedCities, newCity]);
       
-      // Auto-seleccionar la primera ciudad para mostrar recomendaciones
       if (pinnedCities.length === 0) {
         setSelectedCity(newCity);
       }
+      
+      console.log('✅ Ciudad agregada:', newCity.label, '- Fuente:', airQualityData.source);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error al obtener datos:', error);
+      alert('Error al obtener datos. Usando datos de ejemplo.');
+      
+      // Fallback completo
+      const pm25 = 25 + Math.random() * 15;
+      const newCity = { 
+        ...cityOption, 
+        airQuality: {
+          aqi: Math.round((pm25 / 12) * 50),
+          pm25: pm25.toFixed(1),
+          pm10: (pm25 * 1.5).toFixed(1),
+          o3: '45.2',
+          no2: '38.5',
+          timestamp: new Date().toISOString(),
+          source: 'error_fallback'
+        }
+      };
+      setPinnedCities([...pinnedCities, newCity]);
     } finally {
       setIsLoadingCity(false);
     }
@@ -120,58 +155,14 @@ function Dashboard({ onNavigate, userId = '1' }) {
     }
   };
 
-  const handleNotificationClick = (notification) => {
-    if (notification.viewAll) {
-      onNavigate('notifications');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Navbar */}
-      <nav className="bg-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-8">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                AirQuality
-              </h1>
-              
-              <div className="hidden md:flex gap-4">
-                <button
-                  onClick={() => onNavigate('dashboard')}
-                  className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
-                >
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => onNavigate('map')}
-                  className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors"
-                >
-                  Mapa
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              {/* Notification Bell */}
-              <NotificationBell 
-                userId={userId} 
-                onNotificationClick={handleNotificationClick}
-              />
-
-              {/* Profile Button */}
-              <button
-                onClick={() => onNavigate('profile')}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
-              >
-                <User className="w-4 h-4" />
-                <span className="hidden md:inline">Mi Perfil</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      {/* Navbar reutilizable */}
+      <Navbar 
+        currentView="dashboard"
+        onNavigate={onNavigate}
+        userId={userId}
+      />
 
       {/* Main Content */}
       <div className="p-6">
@@ -182,9 +173,6 @@ function Dashboard({ onNavigate, userId = '1' }) {
             <div className="grid md:grid-cols-3 gap-6">
               
               <div className="md:col-span-2">
-                <h3 className="text-sm text-gray-500 mb-2">
-                  Buscar ciudad, estado o condado en USA
-                </h3>
                 <AsyncSelect
                   cacheOptions
                   loadOptions={searchCities}
@@ -195,20 +183,26 @@ function Dashboard({ onNavigate, userId = '1' }) {
                   }
                   loadingMessage={() => "Buscando..."}
                   isClearable
+                  isDisabled={isLoadingCity}
                   className="react-select-container"
                   classNamePrefix="react-select"
                 />
+                {isLoadingCity && (
+                  <p className="text-sm text-blue-600 mt-2">
+                    Consultando modelo ML...
+                  </p>
+                )}
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <Clock className="w-6 h-6 text-purple-600" />
-                </div>
+              <div className="flex items-center justify-end gap-4">
                 <div className="flex-1">
                   <p className="text-xl font-bold text-gray-800 font-mono">
                     {currentTime.time}
                   </p>
                   <p className="text-xs text-gray-600">{currentTime.date}</p>
+                </div>
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <Clock className="w-6 h-6 text-purple-600" />
                 </div>
               </div>
 
@@ -225,20 +219,6 @@ function Dashboard({ onNavigate, userId = '1' }) {
                   onRemove={() => removeCity(city.label)}
                 />
               ))}
-              
-              {/* AI Recommendations - Debajo de las ciudades */}
-              {selectedCity && selectedCity.airQuality && (
-                <div className="bg-white rounded-2xl shadow-xl p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                    Recomendaciones IA para {selectedCity.city}
-                  </h2>
-                  <AirQualityRecommendations
-                    userId={userId}
-                    city={selectedCity.city}
-                    airQualityData={selectedCity.airQuality}
-                  />
-                </div>
-              )}
             </div>
           ) : (
             <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
@@ -247,7 +227,7 @@ function Dashboard({ onNavigate, userId = '1' }) {
                 Busca y agrega lugares para ver su calidad del aire
               </p>
               <p className="text-sm text-gray-500">
-                💡 Después podrás recibir recomendaciones personalizadas con IA
+                Después podrás recibir recomendaciones personalizadas con IA
               </p>
             </div>
           )}

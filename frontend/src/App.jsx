@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import LandingPage from './pages/Landing';
 import Dashboard from './pages/Dashboard';
-import OpenStreetMap from './Components/OpenStreetMap';
+import OpenStreetMap from './pages/Map';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
 

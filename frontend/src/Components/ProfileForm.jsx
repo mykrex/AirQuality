@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Heart, Activity, Bell, MapPin, Save, X } from 'lucide-react';
+import { User, Heart, Activity, Bell, MapPin, Save, X, Car, Bike, Footprints, Bus, Shield } from 'lucide-react';
 
 const ProfileForm = ({ userId, onSave, onCancel }) => {
   const [loading, setLoading] = useState(false);
@@ -14,6 +14,8 @@ const ProfileForm = ({ userId, onSave, onCancel }) => {
     },
     healthConditions: [],
     activityLevel: 'moderate',
+    transportation: 'car',
+    maskUsage: 'sometimes',
     preferences: {
       outdoorActivities: [],
       exercisePreferences: [],
@@ -25,7 +27,7 @@ const ProfileForm = ({ userId, onSave, onCancel }) => {
     }
   });
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
   const healthConditionOptions = [
     { value: 'asthma', label: 'Asma' },
@@ -46,6 +48,19 @@ const ProfileForm = ({ userId, onSave, onCancel }) => {
     { value: 'very_active', label: 'Muy activo' }
   ];
 
+  const transportationOptions = [
+    { value: 'car', label: 'Auto', icon: Car, description: 'Vehículo privado' },
+    { value: 'bike', label: 'Bicicleta', icon: Bike, description: 'Mayor exposición' },
+    { value: 'walking', label: 'Caminando', icon: Footprints, description: 'Exposición directa' },
+    { value: 'public', label: 'Transporte público', icon: Bus, description: 'Exposición moderada' }
+  ];
+
+  const maskUsageOptions = [
+    { value: 'never', label: 'Nunca', color: 'red' },
+    { value: 'sometimes', label: 'A veces', color: 'yellow' },
+    { value: 'always', label: 'Siempre', color: 'green' }
+  ];
+
   const outdoorActivitiesOptions = [
     'running', 'cycling', 'walking', 'hiking', 'sports', 'gardening'
   ];
@@ -63,7 +78,11 @@ const ProfileForm = ({ userId, onSave, onCancel }) => {
       const data = await response.json();
       
       if (data.success) {
-        setProfile(data.data);
+        setProfile({
+          ...data.data,
+          transportation: data.data.transportation || 'car',
+          maskUsage: data.data.maskUsage || 'sometimes'
+        });
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -273,6 +292,98 @@ const ProfileForm = ({ userId, onSave, onCancel }) => {
             </label>
           ))}
         </div>
+      </div>
+
+      {/* Medio de Transporte */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Car className="w-5 h-5 text-purple-600" />
+          <h2 className="text-xl font-semibold text-gray-900">Medio de Transporte Principal</h2>
+        </div>
+        
+        <p className="text-sm text-gray-600 mb-4">
+          Selecciona tu medio de transporte habitual. Esto afecta tu nivel de exposición a contaminantes.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {transportationOptions.map(option => {
+            const Icon = option.icon;
+            return (
+              <label
+                key={option.value}
+                className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  profile.transportation === option.value
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="transportation"
+                  value={option.value}
+                  checked={profile.transportation === option.value}
+                  onChange={(e) => setProfile({...profile, transportation: e.target.value})}
+                  className="w-4 h-4 text-purple-600 focus:ring-2 focus:ring-purple-500"
+                />
+                <Icon className="w-5 h-5 text-purple-600" />
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-gray-700 block">
+                    {option.label}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {option.description}
+                  </span>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Uso de Mascarilla */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Shield className="w-5 h-5 text-indigo-600" />
+          <h2 className="text-xl font-semibold text-gray-900">Uso de Mascarilla o Protección</h2>
+        </div>
+        
+        <p className="text-sm text-gray-600 mb-4">
+          Indica con qué frecuencia utilizas mascarilla al estar al aire libre en días de mala calidad del aire.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {maskUsageOptions.map(option => (
+            <label
+              key={option.value}
+              className={`flex items-center justify-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                profile.maskUsage === option.value && option.color === 'red' ? 'border-red-500 bg-red-50' :
+                profile.maskUsage === option.value && option.color === 'yellow' ? 'border-yellow-500 bg-yellow-50' :
+                profile.maskUsage === option.value && option.color === 'green' ? 'border-green-500 bg-green-50' :
+                'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <input
+                type="radio"
+                name="maskUsage"
+                value={option.value}
+                checked={profile.maskUsage === option.value}
+                onChange={(e) => setProfile({...profile, maskUsage: e.target.value})}
+                className="w-4 h-4 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                {option.label}
+              </span>
+            </label>
+          ))}
+        </div>
+
+        {profile.maskUsage === 'never' && profile.healthConditions.length > 0 && (
+          <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-sm text-orange-800">
+              ⚠️ Considerando tus condiciones de salud, te recomendamos usar mascarilla en días de mala calidad del aire.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Actividades al Aire Libre */}

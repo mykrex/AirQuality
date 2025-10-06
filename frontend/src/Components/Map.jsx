@@ -27,7 +27,7 @@ function AirQualityMap({ latitude, longitude, pm25Value, cityName }) {
       <MapContainer
         center={[latitude, longitude]}
         zoom={12}
-        style={{ height: '250px', width: '100%' }}
+        style={{ height: '250px', width: '100%', zIndex: 1 }}
         zoomControl={false}
         dragging={false}
         scrollWheelZoom={false}

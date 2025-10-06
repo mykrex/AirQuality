@@ -36,3 +36,105 @@
     transform: rotate(360deg);
   }
 }
+
+/* Estilos existentes de tu App.css */
+
+/* Fix para z-index de Leaflet - Evitar que el mapa tape otros elementos */
+.leaflet-container {
+  z-index: 1 !important;
+}
+
+.leaflet-pane {
+  z-index: 400 !important;
+}
+
+.leaflet-tile-pane {
+  z-index: 200 !important;
+}
+
+.leaflet-overlay-pane {
+  z-index: 400 !important;
+}
+
+.leaflet-shadow-pane {
+  z-index: 500 !important;
+}
+
+.leaflet-marker-pane {
+  z-index: 600 !important;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 650 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 700 !important;
+}
+
+.leaflet-map-pane canvas {
+  z-index: 100 !important;
+}
+
+.leaflet-map-pane svg {
+  z-index: 200 !important;
+}
+
+/* Asegurar que el navbar siempre esté arriba */
+nav {
+  z-index: 9999 !important;
+  position: relative;
+}
+
+/* Asegurar que los dropdowns (notifications) estén arriba del mapa */
+.notification-dropdown,
+[role="dialog"],
+.leaflet-popup {
+  z-index: 10000 !important;
+}
+
+/* Fix para popups de Leaflet */
+.leaflet-popup-content-wrapper {
+  z-index: 10001 !important;
+}
+
+/* Animación para pulse del marcador de usuario */
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  50% { 
+    transform: scale(1.1); 
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+  }
+}
+
+.custom-user-marker > div {
+  animation: pulse 2s infinite;
+}
+
+/* React Select z-index fix */
+.react-select-container {
+  z-index: 100;
+}
+
+.react-select__menu {
+  z-index: 101 !important;
+}
+
+/* Estilos para fade-in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
