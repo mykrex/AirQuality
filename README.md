@@ -6,9 +6,9 @@ Proyecto para NASA Space Apps Challenge 2025.
 
 ## Demo
 
-- **Frontend**: [https://tu-proyecto.vercel.app](https://airquality-kappa.vercel.app/)
-- **API**: [https://tu-backend.onrender.com](https://airquality-backend-zzl6.onrender.com)
-- **API - Modelo**: [https://tu-backend.onrender.com](https://airquality-b72p.onrender.com)
+- **Frontend**: [https://airquality-kappa.vercel.app/](https://airquality-kappa.vercel.app/)
+- **API**: [https://airquality-backend-zzl6.onrender.com](https://airquality-backend-zzl6.onrender.com)
+- **API - Modelo**: [https://airquality-b72p.onrender.com](https://airquality-b72p.onrender.com)
 
 ## Características
 
