@@ -40,23 +40,12 @@ function AirQualityChart({ chartData }) {
       <div className="mb-4">
         <div className="flex items-center gap-2 mb-3">
           <TrendingUp className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-bold text-gray-800">Histórico + Predicción 24h - PM2.5</h3>
-        </div>
-        
-        <div className="flex gap-4 text-xs">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-600 rounded"></div>
-            <span className="text-gray-600">Histórico</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-purple-600 rounded opacity-60"></div>
-            <span className="text-gray-600">Predicción</span>
-          </div>
+          <h3 className="text-lg font-bold text-gray-800">Histórico + Predicción 24h - <span className="text-blue-600">PM2.5</span></h3>
         </div>
       </div>
 
-      <div className="relative h-64 bg-gray-50" style={{ border: '1px solid #e5e7eb' }}>
-        <div className="absolute inset-0 flex items-end justify-between gap-1 p-2">
+      <div className="relative h-64 bg-gray-50 mb-8" style={{ border: '1px solid #e5e7eb' }}>
+        <div className="absolute inset-0 flex items-end justify-between gap-1 p-2 pb-0">
           {chartData.map((point, idx) => {
             const value = point.value || 0;
             const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
@@ -102,7 +91,7 @@ function AirQualityChart({ chartData }) {
                     <p className="text-sm">PM2.5: <span className="font-semibold">{value.toFixed(1)} µg/m³</span></p>
                     <p className="text-sm">AQI: <span className="font-semibold">{point.aqi}</span></p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {point.isPast ? '✓ Histórico' : '🔮 Predicción'}
+                      {point.isPast ? '✓ Histórico' : ' Predicción'}
                     </p>
                   </div>
                 </div>

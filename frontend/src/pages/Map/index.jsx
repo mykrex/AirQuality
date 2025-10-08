@@ -323,8 +323,8 @@ function Map({ onNavigate, userId = '1' }) {
               </div>
 
               {/* Insights */}
-              <div className={`bg-white rounded-2xl shadow-xl p-6 border-l-4 border-${insights.color}-500`}>
-                <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+              <div className={`bg-white rounded-2xl p-6`}>
+                <h3 className={`font-bold text-lg mb-3 flex items-center gap-2 border-${insights.color}-500`}>
                   <span className="text-2xl">{insights.icon}</span>
                   {insights.title}
                 </h3>
