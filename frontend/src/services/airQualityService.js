@@ -96,16 +96,28 @@ export async function getCompleteChartData(latitude, longitude) {
       // Combinar y ordenar
       const combined = [...historical, ...predictions].sort((a, b) => a.hour - b.hour);
       
+      // Filtrar los duplicados, si una hora aparece 2 veces, solo queda la primera
+      const uniqueData = [];
+      const seenHours = new Set();
+      
+      combined.forEach(item => {
+        if (!seenHours.has(item.hour)) {
+          seenHours.add(item.hour);
+          uniqueData.push(item);
+        }
+      });
+      
       console.log('Datos combinados:', {
         total: combined.length,
         histórico: historical.length,
         predicciones: predictions.length,
-        horas: combined.map(d => d.hour)
+        únicos: uniqueData.length,
+        horas: uniqueData.map(d => d.hour)
       });
       
       return {
         success: true,
-        data: combined,
+        data: uniqueData,
         current: {
           pm25: predictData.current_pm25,
           aqi: predictData.current_aqi,
