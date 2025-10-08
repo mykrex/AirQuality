@@ -9,7 +9,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
  */
 export async function getCompleteChartData(latitude, longitude) {
     try {
-      console.log('🌍 getCompleteChartData llamado con:', { latitude, longitude });
+      console.log('getCompleteChartData llamado con:', { latitude, longitude });
       
       const now = new Date();
       const year = now.getFullYear();
@@ -17,11 +17,11 @@ export async function getCompleteChartData(latitude, longitude) {
       const day = String(now.getDate()).padStart(2, '0');
       const today = `${year}-${month}-${day}`;
       
-      console.log('📅 Fecha local del navegador:', today);
-      console.log('⏰ Hora actual:', now.toLocaleString());
+      console.log('Fecha local del navegador:', today);
+      console.log('Hora actual:', now.toLocaleString());
       
-      // 1. Obtener histórico del día actual
-      console.log('📥 Solicitando datos históricos para:', today);
+      // Obtener histórico del día actual
+      console.log('Solicitando datos históricos para:', today);
       const historicalResponse = await fetch(`${API_URL}/api/ml/historical`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -34,9 +34,9 @@ export async function getCompleteChartData(latitude, longitude) {
       });
       
       const historicalData = await historicalResponse.json();
-      console.log('📊 Datos históricos recibidos:', historicalData.success ? `${historicalData.historical?.length || 0} puntos` : 'ERROR');
+      console.log('Datos históricos recibidos:', historicalData.success ? `${historicalData.historical?.length || 0} puntos` : 'ERROR');
       
-      // 2. Obtener predicciones del modelo
+      // Obtener predicciones del modelo
       const predictResponse = await fetch(`${API_URL}/api/ml/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,7 +49,7 @@ export async function getCompleteChartData(latitude, longitude) {
       
       const predictData = await predictResponse.json();
       
-      // 3. Procesar datos históricos
+      // Procesar datos históricos
       const historical = (historicalData.historical || []).map(item => {
         const time = new Date(item.time);
         return {
@@ -66,17 +66,17 @@ export async function getCompleteChartData(latitude, longitude) {
         };
       });
       
-      // 4. Procesar SOLO las primeras 3-5 predicciones (resto del día)
+      // Procesar predicciones
       const predictions = [];
-      const hoursLeftToday = 23 - now.getHours();
+      const currentHour = now.getHours();
       
       if (predictData.success && predictData.predictions) {
-        // Tomar solo las horas que faltan del día actual
-        const futurePredictions = predictData.predictions.slice(0, Math.min(hoursLeftToday + 1, 6));
-        
-        futurePredictions.forEach((pred, idx) => {
-          const futureHour = now.getHours() + idx + 1;
-          if (futureHour < 24) {
+        // Filtrar para mostrar solo hasta el final del día (hora 23)
+        predictData.predictions.forEach((pred, idx) => {
+          const futureHour = (currentHour + pred.hours_ahead) % 24;
+          
+          // Solo agregar si futureHour > currentHour (evita duplicados del día siguiente)
+          if (futureHour > currentHour) {
             predictions.push({
               hour: futureHour,
               time: `${futureHour.toString().padStart(2, '0')}:00`,
@@ -93,10 +93,10 @@ export async function getCompleteChartData(latitude, longitude) {
         });
       }
       
-      // 5. Combinar y ordenar
+      // Combinar y ordenar
       const combined = [...historical, ...predictions].sort((a, b) => a.hour - b.hour);
       
-      console.log('✅ Datos combinados:', {
+      console.log('Datos combinados:', {
         total: combined.length,
         histórico: historical.length,
         predicciones: predictions.length,

@@ -59,9 +59,9 @@ const NotificationBell = ({ userId, onNotificationClick }) => {
 
   const getUrgencyIcon = (urgency) => {
     switch (urgency) {
-      case 'high': return '🚨';
-      case 'medium': return '⚠️';
-      default: return 'ℹ️';
+      case 'high': return '!';
+      case 'medium': return '';
+      default: return '';
     }
   };
 
