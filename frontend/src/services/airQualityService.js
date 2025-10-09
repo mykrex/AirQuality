@@ -52,9 +52,10 @@ export async function getCompleteChartData(latitude, longitude) {
       // Procesar datos históricos
       const historical = (historicalData.historical || []).map(item => {
         const time = new Date(item.time);
+        const hour = time.getHours();
         return {
-          hour: time.getHours(),
-          time: time.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+          hour: hour,
+          time: `${hour.toString().padStart(2, '0')}:00`,
           value: item.pm25,
           pm10: item.pm10 || 0,
           uv_index: item.uv_index || 0,
@@ -71,36 +72,38 @@ export async function getCompleteChartData(latitude, longitude) {
       const currentHour = now.getHours();
       
       if (predictData.success && predictData.predictions) {
-        // Filtrar para mostrar solo hasta el final del día (hora 23)
+        // Procesar las predicciones
         predictData.predictions.forEach((pred, idx) => {
-          const futureHour = (currentHour + pred.hours_ahead) % 24;
+          // Calcular la hora de la predicción
+          const totalHours = currentHour + pred.hours_ahead;
+          const displayHour = totalHours % 24;
           
-          // Solo agregar si futureHour > currentHour (evita duplicados del día siguiente)
-          if (futureHour > currentHour) {
-            predictions.push({
-              hour: futureHour,
-              time: `${futureHour.toString().padStart(2, '0')}:00`,
-              value: pred.pm25,
-              pm10: pred.pm10 || pred.pm25 * 1.5,
-              uv_index: pred.uv_index || 0,
-              o3: 0,
-              no2: 0,
-              aqi: pred.aqi,
-              isNow: false,
-              isPast: false
-            });
-          }
+          predictions.push({
+            hour: displayHour,
+            time: `${displayHour.toString().padStart(2, '0')}:00`,
+            value: pred.pm25,
+            pm10: pred.pm10 || pred.pm25 * 1.5,
+            uv_index: pred.uv_index || 0,
+            o3: 0,
+            no2: 0,
+            aqi: pred.aqi,
+            isNow: false,
+            isPast: false,
+            hoursAhead: pred.hours_ahead,
+            sortKey: totalHours
+          });
         });
       }
       
       // Combinar y ordenar
-      const combined = [...historical, ...predictions].sort((a, b) => a.hour - b.hour);
+      const combined = [...historical, ...predictions];
       
       console.log('Datos combinados:', {
         total: combined.length,
         histórico: historical.length,
         predicciones: predictions.length,
-        horas: combined.map(d => d.hour)
+        horas_historico: historical.map(d => d.hour),
+        horas_prediccion: predictions.map(d => `${d.hour} (${d.hoursAhead}h ahead)`)
       });
       
       return {
