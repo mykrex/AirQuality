@@ -25,18 +25,36 @@ function AirQualityChart({ chartData }) {
   console.log('Último punto:', chartData[chartData.length - 1]);
 
   // Filtrar duplicados por hora
-  const uniqueChartData = [];
-  const seenHours = new Set();
+  const now = new Date().getHours();
+  const historicalData = [];
+  const predictionData = [];
+  const seenHistorical = new Set();
+  const seenPredictions = new Set();
   
   chartData.forEach(point => {
-    const hourKey = point.time; // "15:00", "16:00", etc.
-    if (!seenHours.has(hourKey)) {
-      seenHours.add(hourKey);
-      uniqueChartData.push(point);
+    if (point.isPast || point.hour <= now) {
+      if (!seenHistorical.has(point.hour)) {
+        seenHistorical.add(point.hour);
+        historicalData.push({...point, isPast: true});
+      }
+    } 
+    // Si es prediccion (hora > ahora)
+    else if (point.hour > now) {
+      if (!seenPredictions.has(point.hour)) {
+        seenPredictions.add(point.hour);
+        predictionData.push({...point, isPast: false});
+      }
     }
   });
   
-  console.log('Puntos únicos después de filtrar:', uniqueChartData.length);
+  const uniqueChartData = [...historicalData, ...predictionData].sort((a, b) => a.hour - b.hour);
+  
+  console.log('Filtrado:', {
+    original: chartData.length,
+    históricos: historicalData.length,
+    predicciones: predictionData.length,
+    final: uniqueChartData.length
+  });
 
   const getBarColor = (aqi) => {
     if (aqi <= 50) return '#10b981';
