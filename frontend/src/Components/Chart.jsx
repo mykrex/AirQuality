@@ -24,6 +24,20 @@ function AirQualityChart({ chartData }) {
   console.log('Primer punto:', chartData[0]);
   console.log('Último punto:', chartData[chartData.length - 1]);
 
+  // Filtrar duplicados por hora
+  const uniqueChartData = [];
+  const seenHours = new Set();
+  
+  chartData.forEach(point => {
+    const hourKey = point.time; // "15:00", "16:00", etc.
+    if (!seenHours.has(hourKey)) {
+      seenHours.add(hourKey);
+      uniqueChartData.push(point);
+    }
+  });
+  
+  console.log('Puntos únicos después de filtrar:', uniqueChartData.length);
+
   const getBarColor = (aqi) => {
     if (aqi <= 50) return '#10b981';
     if (aqi <= 100) return '#fbbf24';
@@ -32,7 +46,7 @@ function AirQualityChart({ chartData }) {
     return '#9333ea';
   };
 
-  const maxValue = Math.max(...chartData.map(d => d.value || 0));
+  const maxValue = Math.max(...uniqueChartData.map(d => d.value || 0));
   console.log('Valor máximo PM2.5:', maxValue);
 
   return (
@@ -46,7 +60,7 @@ function AirQualityChart({ chartData }) {
 
       <div className="relative h-64 bg-gray-50 mb-8" style={{ border: '1px solid #e5e7eb' }}>
         <div className="absolute inset-0 flex items-end justify-between gap-1 p-2 pb-0">
-          {chartData.map((point, idx) => {
+          {uniqueChartData.map((point, idx) => {
             const value = point.value || 0;
             const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
             const color = getBarColor(point.aqi || 0);
@@ -75,7 +89,7 @@ function AirQualityChart({ chartData }) {
                   </div>
                 )}
                 
-                {!point.isPast && idx > 0 && chartData[idx - 1].isPast && (
+                {!point.isPast && idx > 0 && uniqueChartData[idx - 1].isPast && (
                   <div className="absolute -left-1 top-0 h-full w-0.5 bg-purple-600"></div>
                 )}
                 
